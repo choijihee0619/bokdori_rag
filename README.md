@@ -196,6 +196,22 @@
   * 프론트엔드에서 "보이스피싱 관련 시나리오만 보기", "계좌번호가 포함된 금융퀴즈만 검색" 등 빠른 필터·정확 매칭에 최적
 * Meilisearch는 일반 텍스트 기반 검색, Pinecone은 의미 기반(임베딩) 검색으로, 두 시스템을 병행 활용하면 사용자 편의성과 운영 효율성을 동시에 높일 수 있다.
 
+---
+
+### 구조도 (텍스트 기반)
+
+```
+[사용자 입력]
+    │
+    ├── Pinecone(벡터DB)
+    │       │
+    │       └── [의미기반 유사 문서 추출] ──> LLM(GPT-4.1-nano) ──> [맞춤형 답변 생성]
+    │
+    └── Meilisearch(검색엔진)
+            │
+            └── [키워드/카테고리 기반 빠른 목록·필터링] ──> [운영자/사용자 UI에 목록·검색 제공]
+```
+
 ## 5. 종합
 
 * 복도리 금융교육/사기예방 시나리오 챗봇의 전체 구조는 다음과 같다.
@@ -205,3 +221,53 @@
   * 전체 파이프라인 표준화와 협업/유지보수 효율성을 위해 LangChain을 중심으로 구현
 * LLM 단독 사용은 최신 정보 부족·도메인 한계·사실성 미흡 문제, RAG와 Pinecone 결합으로 보완
 * Pinecone(임베딩 벡터 DB)과 Meilisearch(키워드 검색엔진) 병행 도입은 실제 현업 AI 챗봇 개발에서도 검증된 구조이며, 분업, 유지보수, 성능 등 다양한 측면에서 장점이 크다.
+
+---
+
+## 6. 개발 파일 구조 및 팀 협업/테스트 전략
+
+### 1) 설계 원칙
+
+* REST API 기반으로 각 파트를 분리하여 개발
+* 입력/출력은 텍스트(JSON)로 통일, 음성(STT) 없이도 완전 테스트 가능
+* LangChain, RAG, 벡터DB, 검색엔진, LLM 등은 각각 별도 모듈로 분리
+* 환경변수, API 키 등은 .env 파일로 분리 관리
+* 추후 전체 통합 시, 입출력 포맷(예: {"query": "질문"}, {"answer": "답변"})만 맞추면 충돌 없이 합칠 수 있음
+
+### 2) 파일/폴더 구조 예시
+
+```
+bokdori_rag_chatbot/
+├── main.py                # FastAPI 실행, API 엔드포인트
+├── chatbot_service.py     # LangChain RAG+LLM(파인콘/마일리서치) 핵심 로직
+├── rag_utils.py           # 임베딩, Pinecone 관련 함수
+├── search_utils.py        # Meilisearch 연동/검색 함수
+├── model_config.py        # LLM, 임베딩 등 모델/설정
+├── schema.py              # Pydantic 요청/응답 모델
+├── requirements.txt
+├── .env                   # 비밀키/환경변수
+└── tests/
+    └── test_chatbot.py    # 텍스트 입력/출력 기반 단위 테스트
+```
+
+### 3) 각 파일 역할
+
+* **main.py**: FastAPI 서버, `/chat` 등 엔드포인트, 실제 요청 분배
+* **chatbot\_service.py**: LangChain RAG 파이프라인, Pinecone/Meilisearch에서 유사문서 검색, LLM 호출 및 답변 생성
+* **rag\_utils.py**: 벡터 임베딩, Pinecone 초기화, 문서 업로드/검색 등
+* **search\_utils.py**: Meilisearch 인덱싱, 키워드 검색, 목록 필터 등
+* **model\_config.py**: LLM(OpenAI, GPT-4.1-nano 등) 및 임베딩 모델 설정/관리
+* **schema.py**: Pydantic 데이터모델(요청/응답) 선언, API문서화 및 타입체크
+* **tests/**: 실제 텍스트 입력/출력, 자동화 테스트 코드
+
+### 4) 개발 및 통합 방식
+
+* 본 파트(챗봇+RAG)는 **텍스트만 입력받는 REST API**로 개발/테스트
+  → STT/음성, 프론트엔드와 독립적
+* 다른 팀원이 맡은 음성(STT), 웹, DB 파트와는
+  \*\*API 스펙(입출력 JSON 포맷)\*\*만 미리 합의, 실제 코드는 분리 개발
+* 나중에 전체 파일 합칠 때,
+  FastAPI 내 라우터, 서비스 모듈 통합, DB 연동, 인증 등만 조정하면 통합 가능
+
+---
+

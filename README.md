@@ -19,7 +19,7 @@
 * **24시간 동작**: 실시간으로 카메라 입력 모니터링
 * **사람 인식**:
 
-  * YOLO 모델로 ‘사람’ 감지 시,
+  * YOLO 모델로 '사람' 감지 시,
   * LLM이 시간대에 맞는 인사 및 건강 질문 자동 생성/발화
   * 객체 우선순위(예: 음식, 감정 등) 따라 맞춤 발화
   * 주요 이벤트(존재 여부, 식사, 감정 등) DB 저장
@@ -30,7 +30,7 @@
 
 ### 2-2. 음성 대화 (STT, TTS, LLM)
 
-* **Wakeword(“복돌아”, “복도라”, 등) 인식**
+* **Wakeword("복돌아", "복도라", 등) 인식**
 
   * Picovoice 등 wakeword engine 사용
 * **다중턴, 역할 기반 대화**
@@ -57,7 +57,7 @@
 
 * **DB(슈퍼베이스 또는 몽고DB)에 일일 대화/감정 저장**
 * **GPT API를 통해 일기 형식 감정분석/요약**
-* \*\*웹 프론트(Bolt 등)\*\*에서 감정일기 조회/시각화
+* **웹 프론트(Bolt 등)에서 감정일기 조회/시각화**
 
 ---
 
@@ -159,7 +159,7 @@
 
 ---
 
-## < 최지희 담당 - LangChain Lag LLM >
+## < 최지희 담당 - LangChain RAG LLM >
 # 복도리 AI 인형 프로젝트: 금융교육/사기예방 시나리오 챗봇 구조 및 기술 선택 정리
 
 ## 1. LangChain 사용 이유와 LangGraph 비교
@@ -263,26 +263,46 @@
 
 ```
 bokdori_rag_chatbot/
-├── main.py                # FastAPI 실행, API 엔드포인트
-├── chatbot_service.py     # LangChain RAG+LLM(파인콘/마일리서치) 핵심 로직
-├── rag_utils.py           # 임베딩, Pinecone 관련 함수
-├── search_utils.py        # Meilisearch 연동/검색 함수
-├── model_config.py        # LLM, 임베딩 등 모델/설정
-├── schema.py              # Pydantic 요청/응답 모델
+├── main.py                     # FastAPI 실행, API 엔드포인트
+├── services/
+│   └── chatbot_service.py      # LangChain RAG+LLM 핵심 로직 (금융교육/사기예방 포함)
+├── utils/
+│   ├── rag_utils.py            # 임베딩, Pinecone 관련 함수
+│   ├── search_utils.py         # Meilisearch 연동/검색 함수
+│   └── prompt_utils.py         # LLM 프롬프트 템플릿 관리
+├── config/
+│   ├── model_config.py         # LLM, 임베딩 등 모델/설정
+│   └── settings.py             # 앱 전체 환경설정 (API 키, 서비스 URL 등)
+├── models/
+│   └── schema.py               # Pydantic 요청/응답 모델
+├── data/
+│   ├── scenarios/              # 금융사기 시나리오 JSON/YAML 파일들
+│   └── quiz/                   # 금융퀴즈 데이터
+├── api/
+│   ├── routes.py               # API 엔드포인트 라우팅
+│   └── dependencies.py         # FastAPI 의존성 관리
 ├── requirements.txt
-├── .env                   # 비밀키/환경변수
+├── .env                        # 비밀키/환경변수
+├── README.md                   # 프로젝트 설명, 실행 방법
 └── tests/
-    └── test_chatbot.py    # 텍스트 입력/출력 기반 단위 테스트
+    ├── test_chatbot.py         # 챗봇 기본 기능 테스트
+    └── test_financial.py       # 금융 시나리오/퀴즈 테스트
 ```
 
 ### 3) 각 파일 역할
 
 * **main.py**: FastAPI 서버, `/chat` 등 엔드포인트, 실제 요청 분배
-* **chatbot\_service.py**: LangChain RAG 파이프라인, Pinecone/Meilisearch에서 유사문서 검색, LLM 호출 및 답변 생성
-* **rag\_utils.py**: 벡터 임베딩, Pinecone 초기화, 문서 업로드/검색 등
-* **search\_utils.py**: Meilisearch 인덱싱, 키워드 검색, 목록 필터 등
-* **model\_config.py**: LLM(OpenAI, GPT-4.1-nano 등) 및 임베딩 모델 설정/관리
-* **schema.py**: Pydantic 데이터모델(요청/응답) 선언, API문서화 및 타입체크
+* **services/chatbot_service.py**: LangChain RAG 파이프라인, Pinecone/Meilisearch에서 유사문서 검색, LLM 호출 및 답변 생성
+* **utils/rag_utils.py**: 벡터 임베딩, Pinecone 초기화, 문서 업로드/검색 등
+* **utils/search_utils.py**: Meilisearch 인덱싱, 키워드 검색, 목록 필터 등
+* **utils/prompt_utils.py**: 금융교육/사기예방 관련 LLM 프롬프트 템플릿 관리
+* **config/model_config.py**: LLM(OpenAI, GPT-4.1-nano 등) 및 임베딩 모델 설정/관리
+* **config/settings.py**: API 키, 서비스 URL, 환경 변수 관리
+* **models/schema.py**: Pydantic 데이터모델(요청/응답) 선언, API문서화 및 타입체크
+* **data/scenarios/**: 금융사기 사례, 예방법, FAQ 등 시나리오 데이터
+* **data/quiz/**: 금융교육 퀴즈, 문제, 정답 및 해설 데이터
+* **api/routes.py**: API 엔드포인트 라우팅 및 처리
+* **api/dependencies.py**: FastAPI 의존성 관리
 * **tests/**: 실제 텍스트 입력/출력, 자동화 테스트 코드
 
 ### 4) 개발 및 통합 방식
@@ -290,7 +310,7 @@ bokdori_rag_chatbot/
 * 본 파트(챗봇+RAG)는 **텍스트만 입력받는 REST API**로 개발/테스트
   → STT/음성, 프론트엔드와 독립적
 * 다른 팀원이 맡은 음성(STT), 웹, DB 파트와는
-  \*\*API 스펙(입출력 JSON 포맷)\*\*만 미리 합의, 실제 코드는 분리 개발
+  **API 스펙(입출력 JSON 포맷)**만 미리 합의, 실제 코드는 분리 개발
 * 나중에 전체 파일 합칠 때,
   FastAPI 내 라우터, 서비스 모듈 통합, DB 연동, 인증 등만 조정하면 통합 가능
 
@@ -321,10 +341,7 @@ bokdori_ai_project/
 #### 통합 구현 방법(간략 정리)
 
 * 개발 단계에서는 각 파트(main.py)만으로 테스트/구동
-* 전체 통합 시 루트 main.py(혹은 run.py)에서 각 파트의 FastAPI 앱/라우터를 include\_router 등으로 통합 실행
+* 전체 통합 시 루트 main.py(혹은 run.py)에서 각 파트의 FastAPI 앱/라우터를 include_router 등으로 통합 실행
 * 각 서비스간 충돌 없이 병렬 개발 → 마지막에 합의된 API 포맷, 라우팅만 통일/수정
 * 필요한 경우, 공통 모듈(공유 utils, config, .env 등)은 루트에서 관리
-
----
-
 

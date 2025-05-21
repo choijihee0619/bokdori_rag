@@ -263,33 +263,57 @@
 
 ```
 bokdori_rag_chatbot/
-├── main.py                     # FastAPI 실행, API 엔드포인트
+├── main.py                     # FastAPI 실행, API 엔드포인트 (통합 단계)
 ├── services/
-│   └── chatbot_service.py      # LangChain RAG+LLM 핵심 로직 (금융교육/사기예방 포함)
+│   └── chatbot_service.py      # LangChain RAG+LLM 핵심 로직 (핵심 개발)
 ├── utils/
-│   ├── rag_utils.py            # 임베딩, Pinecone 관련 함수
-│   ├── search_utils.py         # Meilisearch 연동/검색 함수
-│   └── prompt_utils.py         # LLM 프롬프트 템플릿 관리
+│   ├── rag_utils.py            # 임베딩, Pinecone 관련 함수 (핵심 개발)
+│   ├── search_utils.py         # Meilisearch 연동/검색 함수 (핵심 개발)
+│   └── prompt_utils.py         # LLM 프롬프트 템플릿 관리 (핵심 개발)
 ├── config/
-│   ├── model_config.py         # LLM, 임베딩 등 모델/설정
-│   └── settings.py             # 앱 전체 환경설정 (API 키, 서비스 URL 등)
+│   ├── model_config.py         # LLM, 임베딩 등 모델/설정 (핵심 개발)
+│   └── settings.py             # 앱 전체 환경설정 (핵심 개발)
 ├── models/
-│   └── schema.py               # Pydantic 요청/응답 모델
+│   └── schema.py               # Pydantic 데이터모델 (통합 단계)
 ├── data/
-│   ├── scenarios/              # 금융사기 시나리오 JSON/YAML 파일들
-│   └── quiz/                   # 금융퀴즈 데이터
+│   ├── scenarios/              # 금융사기 시나리오 데이터 (핵심 개발)
+│   └── quiz/                   # 금융퀴즈 데이터 (핵심 개발)
 ├── api/
-│   ├── routes.py               # API 엔드포인트 라우팅
-│   └── dependencies.py         # FastAPI 의존성 관리
-├── cli/
-│   └── chat_tester.py          # CLI 기반 대화형 테스트 도구
-├── requirements.txt
-├── .env                        # 비밀키/환경변수
-├── README.md                   # 프로젝트 설명, 실행 방법
+│   ├── routes.py               # API 엔드포인트 라우팅 (통합 단계)
+│   └── dependencies.py         # FastAPI 의존성 관리 (통합 단계)
+├── cli/  # 독립 테스트 단계 파일들 (초기 개발 및 테스트용)
+│   ├── chat_tester.py          # CLI 기반 대화형 테스트 도구
+│   ├── test_scenarios.json     # 테스트용 대화 시나리오
+│   └── debug_utils.py          # 디버깅 및 로깅 도구
+├── integration/  # 통합 단계 파일들 (STT/TTS 통합 시 사용)
+│   ├── stt_adapter.py          # STT 연동 어댑터
+│   ├── tts_adapter.py          # TTS 연동 어댑터
+│   └── pipeline.py             # 전체 파이프라인 관리
+├── requirements.txt            # 의존성 패키지 목록 (모든 단계)
+├── .env                        # 비밀키/환경변수 (모든 단계)
+├── README.md                   # 프로젝트 설명 (모든 단계)
 └── tests/
-    ├── test_chatbot.py         # 챗봇 기본 기능 테스트
-    └── test_financial.py       # 금융 시나리오/퀴즈 테스트
+    ├── test_chatbot.py         # 유닛 테스트 (핵심 개발)
+    ├── test_financial.py       # 금융 시나리오 테스트 (핵심 개발)
+    └── test_integration.py     # 통합 테스트 (통합 단계)
 ```
+
+#### 개발 단계별 파일 분류:
+
+1. **초기 개발 단계 (CLI 테스트)** - 먼저 개발하는 파일들:
+   - `services/chatbot_service.py` - 핵심 LangChain RAG+LLM 로직
+   - `utils/` 폴더 내 유틸리티 파일들 - RAG, 검색, 프롬프트 관리
+   - `config/` 폴더 내 설정 파일들 - 모델, 환경 설정
+   - `data/` 폴더 내 시나리오/퀴즈 데이터
+   - `cli/` 폴더 내 모든 파일 - 초기 개발 테스트용
+   - `tests/` 폴더 내 단위 테스트
+
+2. **통합 개발 단계 (STT/TTS 연동)** - 나중에 개발하는 파일들:
+   - `main.py` - FastAPI 실행 및 전체 엔드포인트
+   - `models/schema.py` - API 요청/응답 모델
+   - `api/` 폴더 내 파일들 - REST API 구현
+   - `integration/` 폴더 내 파일들 - STT/TTS 통합
+   - `tests/test_integration.py` - 통합 테스트
 
 ### 4) 개발 및 통합 프로세스
 
@@ -313,7 +337,6 @@ bokdori_rag_chatbot/
   - 전체 시스템 통합 테스트 및 안정화
   - 실제 환경(인형 하드웨어)에서의 테스트 및 최적화
 
- 
 ### 5) CLI 테스트 도구 (`cli/chat_tester.py`)
 
 CLI 테스트 도구는 STT/TTS 모듈 없이도 LangChain RAG+LLM 챗봇의 기능을 직접 테스트할 수 있는 환경을 제공합니다:
@@ -349,3 +372,38 @@ CLI 테스트 도구는 STT/TTS 모듈 없이도 LangChain RAG+LLM 챗봇의 기
 
 이러한 모듈식 설계를 통해 각 파트가 독립적으로 개발되고 테스트될 수 있으며, 최종 통합 시에도 인터페이스만 맞추면 원활한 연동이 가능합니다.
 
+### 통합 후 최종 폴더 구조
+
+통합 단계가 완료된 후 최종 결과물 폴더 구조는 다음과 같을 것입니다:
+
+```
+bokdori_ai_project/           # 프로젝트 루트
+├── main.py                   # 메인 진입점
+├── services/                 # 핵심 서비스 모듈
+│   ├── chatbot_service.py    # LangChain RAG+LLM 로직
+│   ├── stt_service.py        # STT 서비스
+│   └── tts_service.py        # TTS 서비스
+├── utils/                    # 유틸리티 함수
+│   ├── rag_utils.py          # RAG 관련 유틸리티
+│   ├── search_utils.py       # 검색 유틸리티
+│   └── prompt_utils.py       # 프롬프트 관리
+├── config/                   # 환경 설정
+│   ├── model_config.py       # 모델 설정
+│   └── settings.py           # 앱 설정
+├── models/                   # 데이터 모델
+│   └── schema.py             # API 스키마
+├── data/                     # 데이터 파일
+│   ├── scenarios/            # 금융사기 시나리오
+│   └── quiz/                 # 금융퀴즈
+├── api/                      # API 엔드포인트
+│   ├── routes.py             # 라우트 정의
+│   └── dependencies.py       # 의존성
+├── tests/                    # 테스트 코드 (참조용 유지)
+│   ├── test_chatbot.py
+│   ├── test_financial.py
+│   └── test_integration.py
+├── requirements.txt          # 의존성 패키지
+└── README.md                 # 프로젝트 설명
+```
+
+최종 통합 구조에서는 개발 단계에 사용했던 `cli/` 폴더와 `integration/` 폴더가 제거되고, STT와 TTS 기능이 `services/` 폴더로 통합됩니다. 테스트 코드는 참조와 유지보수를 위해 유지됩니다.
